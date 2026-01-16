@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mago Goma - El juego de encadenar palabras</title>
+    <title>Mago Goma - el juego de encadenar palabras</title>
     <style>
         :root {
             --primary: #6c5ce7;
@@ -70,7 +70,11 @@
             box-shadow: 0 0 15px var(--mirror-on);
             animation: pulse 2s infinite;
         }
+        #mirror-btn:disabled { opacity: 0.5; cursor: not-allowed; animation: none; }
+
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        .level-badge { font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; background: var(--primary); margin-left: 5px; }
 
         .btn-small { background: transparent; border: 1px solid white; color: white; width: auto; font-size: 0.7rem; padding: 8px 12px; }
 
@@ -82,7 +86,9 @@
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 
         .help-text { text-align: left; font-size: 0.9rem; line-height: 1.4; color: #ccc; }
-        .help-text b { color: var(--accent); }
+        .level-selector { display: flex; gap: 5px; margin-bottom: 20px; width: 100%; }
+        .level-btn { flex: 1; padding: 10px; font-size: 0.7rem; border-radius: 10px; border: 2px solid var(--primary); background: transparent; color: white; cursor: pointer; }
+        .level-btn.active { background: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -92,23 +98,31 @@
         <div id="scr-menu" class="screen active">
             <div class="magician">🧙‍♂️</div>
             <h1 style="color: var(--accent); font-size: 2rem;">MAGO GOMA</h1>
-            <p style="margin-bottom: 20px; opacity: 0.9;">El juego de encadenar palabras</p>
-            <div id="vocab-counter" style="font-size: 0.8rem; margin-bottom: 20px; color: var(--success);">Cargando diccionario...</div>
+            <p style="margin-bottom: 20px; opacity: 0.9;">el juego de encadenar palabras</p>
             
+            <p style="font-size: 0.8rem; margin-bottom: 10px;">Dificultad del Mago:</p>
+            <div class="level-selector">
+                <button class="level-btn active" onclick="setLevel('aprendiz', this)">Aprendiz</button>
+                <button class="level-btn" onclick="setLevel('sabio', this)">Sabio</button>
+                <button class="level-btn" onclick="setLevel('supremo', this)">Supremo</button>
+            </div>
+
             <button class="btn btn-primary" onclick="initGame('classic')">Modo Clásico</button>
             <button class="btn btn-primary" onclick="initGame('sudden')">Muerte Súbita</button>
             <button class="btn btn-accent" onclick="showScreen('scr-how')">Cómo jugar❓</button>
             <button class="btn btn-small" onclick="showAdmin()" style="margin-top:10px">🔧 Administrar Diccionario</button>
+            <div id="vocab-counter" style="font-size: 0.7rem; margin-top: 15px; color: var(--success);"></div>
         </div>
 
         <!-- PANTALLA CÓMO JUGAR -->
         <div id="scr-how" class="screen">
             <h2 style="color: var(--accent); margin-bottom: 15px;">Instrucciones</h2>
             <div class="help-text">
-                <p>1. Escribe una palabra que empiece con la <b>última sílaba</b> de la anterior. Tienes 20 segundos. </p>
-                <p>2. Las tildes no importan al encadenar: <b>Jabón</b> termina en <b>bon</b>, puedes seguir con <b>Bondad</b>.</p>
-                <p>3. El Mago <b>aprende</b> las palabras nuevas que tú escribas.</p>
-                <p>4. <b>Efecto Espejo:</b> Devuelve la sílaba al oponente. Si el Mago no sabe qué decir, ¡lo usará contra ti! Se puede usar una vez por partida.</p>
+                <p>1. Escribe una palabra que empiece con la <b>última sílaba</b> de la anterior.</p>
+                <p>2. Las tildes no importan: <b>Jabón</b> termina en <b>bon</b>.</p>
+                <p>3. <b>Niveles:</b> El Mago falla más en Aprendiz y es casi perfecto en Supremo.</p>
+                <p>4. <b>Espejo:</b> Devuelve la sílaba. <b>¡Ojo!</b> No se puede responder a un espejo con otro espejo.</p>
+                <p>5. Si pierdes una vida, la cadena se rompe y el Mago lanza una palabra nueva.</p>
             </div>
             <br>
             <button class="btn btn-primary" onclick="showScreen('scr-menu')">Entendido</button>
@@ -116,19 +130,19 @@
 
         <!-- PANTALLA ADMIN -->
         <div id="scr-admin" class="screen">
-            <h2 style="color: var(--accent); margin-bottom: 10px;">BIBLIOTECA MÁGICA</h2>
+            <h2 style="color: var(--accent); margin-bottom: 10px;">BIBLIOTECA</h2>
             <div style="display: flex; gap: 5px; width: 100%;">
-                <input type="text" id="add-word-input" placeholder="Nueva palabra..." style="margin:0; font-size: 1rem;">
+                <input type="text" id="add-word-input" placeholder="Nueva..." style="margin:0; font-size: 1rem;">
                 <button class="btn btn-primary" style="width: auto; margin:0;" onclick="addWordAdmin()">Añadir</button>
             </div>
-            <input type="text" id="admin-search" placeholder="🔍 Buscar palabra..." oninput="renderAdmin()" style="margin-top:10px; font-size: 0.9rem; padding: 8px;">
+            <input type="text" id="admin-search" placeholder="🔍 Buscar..." oninput="renderAdmin()" style="margin-top:10px; font-size: 0.9rem; padding: 8px;">
             <div id="admin-list"></div>
             <div style="display: flex; gap: 5px; width: 100%; margin-bottom: 10px;">
                 <button class="btn-small" style="flex:1; background: #0984e3;" onclick="exportJSON()">Exportar</button>
                 <button class="btn-small" style="flex:1; background: #6c5ce7;" onclick="document.getElementById('file-input').click()">Importar</button>
                 <input type="file" id="file-input" style="display:none" accept=".json" onchange="importJSON(this)">
             </div>
-            <button class="btn btn-primary" onclick="showScreen('scr-menu')">Regresar</button>
+            <button class="btn btn-primary" onclick="showScreen('scr-menu')">Volver</button>
         </div>
 
         <!-- PANTALLA JUEGO -->
@@ -162,12 +176,36 @@
     </div>
 
     <script>
-        /** NORMALIZACIÓN (Elimina tildes) **/
+        const INITIAL_VOCAB = ["mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "ostra", "astro", "atleta"];
+
+        const state = {
+            mode: 'classic', 
+            level: 'aprendiz',
+            lives: 3, 
+            score: 0, 
+            lastSyllable: '',
+            timer: null, 
+            timeLeft: 20, 
+            usedWords: new Set(),
+            memory: [], 
+            mirrorAvailable: true, 
+            wizardMirrorAvailable: true,
+            isMirrorInEffect: false // Nueva bandera para evitar espejo sobre espejo
+        };
+
+        const KEY = 'mago_goma_v_final';
+        const JSON_URL = 'palabras.json';
+
         function normalize(text) {
             return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
-        /** MOTOR DE SILABEO PROFESIONAL **/
+        function setLevel(lvl, btn) {
+            state.level = lvl;
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
         function splitSyllables(word) {
             word = word.toLowerCase().trim();
             const strong = "aeoáéó";
@@ -175,10 +213,8 @@
             const weak = "iuü";
             const vowels = strong + accentedWeak + weak;
             const inseparable = ["bl","br","cl","cr","dl","dr","fl","fr","gl","gr","pl","pr","tr","ch","ll","rr"];
-            
             let syllables = [];
             let i = 0;
-
             while (i < word.length) {
                 let nucS = i;
                 while (nucS < word.length && !vowels.includes(word[nucS])) nucS++;
@@ -186,20 +222,15 @@
                     if (syllables.length > 0) syllables[syllables.length - 1] += word.substring(i);
                     break;
                 }
-                
                 let nucE = nucS;
                 while (nucE + 1 < word.length && vowels.includes(word[nucE + 1])) {
                     let v1 = word[nucE], v2 = word[nucE + 1];
-                    const hiatus = (strong.includes(v1) && strong.includes(v2)) || 
-                                   (strong.includes(v1) && accentedWeak.includes(v2)) || 
-                                   (accentedWeak.includes(v1) && strong.includes(v2));
+                    const hiatus = (strong.includes(v1) && strong.includes(v2)) || (strong.includes(v1) && accentedWeak.includes(v2)) || (accentedWeak.includes(v1) && strong.includes(v2));
                     if (hiatus) break;
                     nucE++;
                 }
-
                 let nextNuc = nucE + 1;
                 while (nextNuc < word.length && !vowels.includes(word[nextNuc])) nextNuc++;
-
                 let cut = nucE + 1;
                 if (nextNuc < word.length) {
                     let consCount = nextNuc - (nucE + 1);
@@ -209,74 +240,36 @@
                     } else if (consCount === 3) {
                         const lastPair = word.substring(nucE + 2, nucE + 4);
                         cut = inseparable.includes(lastPair) ? nucE + 2 : nucE + 3;
-                    } else if (consCount === 4) {
-                        cut = nucE + 3;
-                    }
+                    } else if (consCount === 4) cut = nucE + 3;
                 } else cut = word.length;
-
                 syllables.push(word.substring(i, cut));
                 i = cut;
             }
             return syllables;
         }
 
-        // --- PALABRAS INICIALES (Hardcoded por si falla el fetch) ---
-        const INITIAL_VOCAB = ["mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "ostra", "astro", "atleta"];
-
-        const state = {
-            mode: 'classic', lives: 3, score: 0, lastSyllable: '',
-            timer: null, timeLeft: 20, usedWords: new Set(),
-            memory: [], mirrorAvailable: true, wizardMirrorAvailable: true
-        };
-
-        const KEY = 'mago_goma_v_pro_final';
-        const JSON_URL = 'palabras.json'; // Nombre del archivo en tu GitHub
-
-        /**
-         * CARGA DE MEMORIA (HÍBRIDA: Fetch + LocalStorage)
-         */
         async function loadMemory() {
             let baseWords = [...INITIAL_VOCAB];
-
-            // 1. Intentar cargar desde el archivo palabras.json en GitHub
             try {
                 const response = await fetch(JSON_URL);
                 if (response.ok) {
                     const remoteWords = await response.json();
-                    // Combinar y eliminar duplicados
                     baseWords = [...new Set([...baseWords, ...remoteWords])];
-                    console.log("Diccionario remoto cargado correctamente.");
                 }
-            } catch (error) {
-                console.warn("No se encontró el archivo palabras.json o error de formato. Usando vocabulario base.");
-            }
-
-            // 2. Combinar con palabras aprendidas localmente por el usuario
+            } catch (error) {}
             const saved = localStorage.getItem(KEY);
-            if (saved) {
-                const localWords = JSON.parse(saved);
-                state.memory = [...new Set([...baseWords, ...localWords])];
-            } else {
-                state.memory = baseWords;
-            }
-
+            state.memory = saved ? [...new Set([...baseWords, ...JSON.parse(saved)])] : baseWords;
             document.getElementById('vocab-counter').innerText = `Vocabulario: ${state.memory.length} palabras`;
         }
 
-        function saveMemory() { 
-            localStorage.setItem(KEY, JSON.stringify(state.memory)); 
-            document.getElementById('vocab-counter').innerText = `Vocabulario: ${state.memory.length} palabras`;
-        }
+        function saveMemory() { localStorage.setItem(KEY, JSON.stringify(state.memory)); }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        function showAdmin() {
-            showScreen('scr-admin');
-            renderAdmin();
-        }
+        function showAdmin() { showScreen('scr-admin'); renderAdmin(); }
 
         function renderAdmin() {
             const list = document.getElementById('admin-list');
@@ -295,8 +288,7 @@
         function addWordAdmin() {
             const input = document.getElementById('add-word-input');
             const word = input.value.toLowerCase().trim();
-            if (word.length < 2) return;
-            if (!state.memory.includes(word)) {
+            if (word.length >= 2 && !state.memory.includes(word)) {
                 state.memory.push(word);
                 saveMemory();
                 input.value = '';
@@ -311,6 +303,7 @@
         }
 
         function initGame(mode) {
+            loadMemory();
             state.mode = mode;
             state.lives = mode === 'classic' ? 3 : 1;
             state.score = 0;
@@ -318,11 +311,12 @@
             state.lastSyllable = '';
             state.mirrorAvailable = true;
             state.wizardMirrorAvailable = true;
+            state.isMirrorInEffect = false;
             
             updateMirrorUI();
             showScreen('scr-game');
             updateHUD();
-            document.getElementById('ui-word').innerText = "¡EMPIEZA!";
+            document.getElementById('ui-word').innerText = "¡ADELANTE!";
             document.getElementById('ui-hint').innerText = "Escribe cualquier palabra...";
             document.getElementById('game-input').value = "";
             document.getElementById('game-input').focus();
@@ -338,7 +332,7 @@
             const firstSyllNorm = normalize(sylls[0]);
 
             if (state.lastSyllable && firstSyllNorm !== state.lastSyllable) {
-                processError(`Debe ser "${state.lastSyllable.toUpperCase()}" (Pusiste "${firstSyllNorm.toUpperCase()}")`);
+                processError(`Debe ser "${state.lastSyllable.toUpperCase()}"`);
                 return;
             }
             if (state.usedWords.has(val)) { processError("¡Ya usada!"); return; }
@@ -351,6 +345,9 @@
             if (rawLast.startsWith('rr')) rawLast = rawLast.substring(1); 
             state.lastSyllable = normalize(rawLast);
 
+            state.isMirrorInEffect = false; // El usuario respondió normal, se libera restricción
+            updateMirrorUI();
+
             flash('correct');
             document.getElementById('ui-word').innerText = val;
             input.value = "";
@@ -361,32 +358,43 @@
         }
 
         function wizardTurn() {
+            const rates = { aprendiz: 0.6, sabio: 0.8, supremo: 0.99 };
+            const successProbability = rates[state.level];
+            
             const possible = state.memory.filter(w => normalize(splitSyllables(w)[0]) === state.lastSyllable && !state.usedWords.has(w));
             
-            if (possible.length > 0) {
+            // Lógica de "Decidir si encuentra palabra" según nivel
+            if (possible.length > 0 && Math.random() < successProbability) {
                 const pick = possible[Math.floor(Math.random() * possible.length)];
                 const s = splitSyllables(pick);
                 state.usedWords.add(pick);
                 let rawLast = s[s.length - 1];
                 if (rawLast.startsWith('rr')) rawLast = rawLast.substring(1);
                 state.lastSyllable = normalize(rawLast);
+                state.isMirrorInEffect = false;
+                updateMirrorUI();
 
                 document.getElementById('mago-emoji').innerText = "🧙‍♂️";
                 document.getElementById('ui-word').innerText = pick;
                 document.getElementById('ui-hint').innerText = `Tu turno: "${state.lastSyllable.toUpperCase()}"`;
                 startTimer(Math.max(6, 20 - (state.score/80)));
             } else {
-                if (state.wizardMirrorAvailable && state.lastSyllable !== '') {
+                // Si el mago no sabe/falla, intenta espejo si no estamos ya en uno
+                if (state.wizardMirrorAvailable && state.lastSyllable !== '' && !state.isMirrorInEffect) {
                     state.wizardMirrorAvailable = false;
+                    state.isMirrorInEffect = true;
+                    updateMirrorUI();
                     document.getElementById('mago-emoji').innerText = "🪞";
                     document.getElementById('ui-word').innerText = "¡REFLEJO!";
-                    document.getElementById('ui-hint').innerText = `¡REFLEJO! Responde tú: "${state.lastSyllable.toUpperCase()}"`;
+                    document.getElementById('ui-hint').innerText = `¡REFLEJO! Responde tú a: "${state.lastSyllable.toUpperCase()}"`;
                     startTimer(10);
                 } else {
                     document.getElementById('mago-emoji').innerText = "😵";
                     document.getElementById('ui-word').innerText = "¡ME RINDO!";
-                    document.getElementById('ui-hint').innerText = "¡Libre! Empieza cadena:";
+                    document.getElementById('ui-hint').innerText = "¡Ganas bonus! Cadena libre:";
                     state.lastSyllable = "";
+                    state.isMirrorInEffect = false;
+                    updateMirrorUI();
                     startTimer(20);
                 }
             }
@@ -394,37 +402,50 @@
         }
 
         function execMirror() {
-            if(!state.mirrorAvailable || !state.lastSyllable) return;
+            if(!state.mirrorAvailable || !state.lastSyllable || state.isMirrorInEffect) return;
             state.mirrorAvailable = false;
+            state.isMirrorInEffect = true;
             updateMirrorUI();
             clearInterval(state.timer);
             document.getElementById('mago-emoji').innerText = "🪞";
             document.getElementById('ui-word').innerText = "¡ESPEJO!";
-            document.getElementById('ui-hint').innerText = `¡REFLEJO! Mago responde a: "${state.lastSyllable.toUpperCase()}"`;
+            document.getElementById('ui-hint').innerText = `Mago debe responder a: "${state.lastSyllable.toUpperCase()}"`;
             setTimeout(wizardTurn, 800);
         }
 
         function updateMirrorUI() {
             const btn = document.getElementById('mirror-btn');
-            if (state.mirrorAvailable) {
+            const canUse = state.mirrorAvailable && !state.isMirrorInEffect && state.lastSyllable !== '';
+            
+            if (canUse) {
                 btn.classList.add('available');
+                btn.disabled = false;
                 btn.innerText = "🪞 ESPEJO DISPONIBLE";
             } else {
                 btn.classList.remove('available');
-                btn.innerText = "🪞 ESPEJO AGOTADO";
+                btn.disabled = true;
+                btn.innerText = state.isMirrorInEffect ? "🚫 REFLEJO ACTIVO" : "🪞 ESPEJO USADO";
             }
         }
 
         function processError(msg) {
-            state.lives--; flash('wrong'); updateHUD();
+            state.lives--; 
+            flash('wrong'); 
+            updateHUD();
             if (state.lives <= 0) {
                 clearInterval(state.timer);
                 document.getElementById('final-score').innerText = `${state.score} PTS`;
                 showScreen('scr-over');
             } else {
-                document.getElementById('ui-hint').innerText = msg;
+                // AL PERDER VIDA: Reinicio de cadena
+                state.lastSyllable = "";
+                state.isMirrorInEffect = false;
+                updateMirrorUI();
+                document.getElementById('mago-emoji').innerText = "🔮";
+                document.getElementById('ui-word').innerText = "¡REINTENTO!";
+                document.getElementById('ui-hint').innerText = "Cadena reiniciada. ¡Lanza una palabra!";
                 document.getElementById('game-input').value = "";
-                startTimer(15);
+                startTimer(20);
             }
         }
 
@@ -448,7 +469,7 @@
         
         function exportJSON() {
             const blob = new Blob([JSON.stringify(state.memory, null, 2)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diccionario_mago.json'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mago_diccionario.json'; a.click();
         }
         function importJSON(input) {
             const reader = new FileReader();
@@ -460,8 +481,6 @@
         }
 
         document.getElementById('game-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleInput(); });
-        
-        // Carga inicial al abrir la página
         loadMemory();
     </script>
 </body>
