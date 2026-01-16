@@ -44,7 +44,7 @@
             box-shadow: 0 0 50px rgba(108, 92, 231, 0.4);
         }
 
-        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; overflow-y: auto; padding: 10px; }
         .screen.active { display: flex; }
 
         .hud { display: flex; justify-content: space-between; width: 100%; position: absolute; top: 20px; left: 0; padding: 0 30px; font-weight: bold; }
@@ -55,13 +55,14 @@
         .current-word { font-size: 2.6rem; color: var(--accent); text-transform: uppercase; font-weight: 900; }
         .syllable-hint { margin-top: 10px; color: var(--success); font-size: 1.1rem; font-weight: bold; }
 
-        #admin-list { width: 100%; height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 10px 0; padding: 5px; border: 1px solid var(--primary); }
+        #admin-list { width: 100%; height: 180px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 10px 0; padding: 5px; border: 1px solid var(--primary); }
         .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; }
         
         input { width: 100%; padding: 12px; border-radius: 15px; border: 3px solid var(--primary); font-size: 1.2rem; text-align: center; outline: none; margin-bottom: 10px; }
         
         .btn { padding: 12px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; width: 100%; margin-bottom: 8px; transition: 0.3s; }
         .btn-primary { background: var(--primary); color: white; }
+        .btn-accent { background: var(--accent); color: black; }
         
         #mirror-btn { background: var(--mirror-off); color: #1a1a2e; }
         #mirror-btn.available { 
@@ -79,43 +80,57 @@
         .correct { background-color: #1b4d3e !important; }
         .wrong { background-color: #4d1b1b !important; animation: shake 0.3s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+        .help-text { text-align: left; font-size: 0.9rem; line-height: 1.4; color: #ccc; }
+        .help-text b { color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <!-- MENU -->
+        <!-- PANTALLA MENU -->
         <div id="scr-menu" class="screen active">
             <div class="magician">🧙‍♂️</div>
-            <h1 style="color: var(--accent); font-size: 2.2rem;">MAGO GOMA</h1>
-            <p style="margin-bottom: 10px; opacity: 0.8;">El juego de encadenar palabras</p>
+            <h1 style="color: var(--accent); font-size: 2rem;">MAGO GOMA</h1>
+            <p style="margin-bottom: 20px; opacity: 0.9;">El juego de encadenar palabras</p>
             <div id="vocab-counter" style="font-size: 0.8rem; margin-bottom: 20px; color: var(--success);"></div>
-            <button class="btn btn-primary" onclick="initGame('classic')">Modo Clásico</button>
-            <button class="btn btn-primary" onclick="initGame('sudden')">Muerte Súbita</button>
-            <button class="btn btn-accent" style="background:var(--accent); color:black;" onclick="showAdmin()">🔧 Diccionario / Admin</button>
+            <button class="btn btn-primary" onclick="initGame('classic')">Modo Clásico (3 Vidas)</button>
+            <button class="btn btn-primary" onclick="initGame('sudden')">Muerte Súbita (1 Vida)</button>
+            <button class="btn btn-accent" onclick="showScreen('scr-how')">Cómo jugar❓</button>
+            <button class="btn btn-small" onclick="showAdmin()" style="margin-top:10px">🔧 Administrar Diccionario</button>
         </div>
 
-        <!-- ADMIN -->
+        <!-- PANTALLA CÓMO JUGAR -->
+        <div id="scr-how" class="screen">
+            <h2 style="color: var(--accent); margin-bottom: 15px;">Instrucciones</h2>
+            <div class="help-text">
+                <p>1. Escribe una palabra que empiece con la <b>última sílaba</b> de la anterior.</p>
+                <p>2. Las tildes no importan al encadenar: <b>Jabón</b> termina en <b>bon</b>, puedes seguir con <b>Bondad</b>.</p>
+                <p>3. Tienes 20 segundos. El Mago aprende las palabras nuevas que tú escribas.</p>
+                <p>4. <b>Efecto Espejo:</b> Devuelve la sílaba al oponente. Si el Mago no sabe qué decir, ¡lo usará contra ti!</p>
+            </div>
+            <br>
+            <button class="btn btn-primary" onclick="showScreen('scr-menu')">Entendido</button>
+        </div>
+
+        <!-- PANTALLA ADMIN -->
         <div id="scr-admin" class="screen">
             <h2 style="color: var(--accent); margin-bottom: 10px;">BIBLIOTECA MÁGICA</h2>
             <div style="display: flex; gap: 5px; width: 100%;">
                 <input type="text" id="add-word-input" placeholder="Nueva palabra..." style="margin:0; font-size: 1rem;">
                 <button class="btn btn-primary" style="width: auto; margin:0;" onclick="addWordAdmin()">Añadir</button>
             </div>
-            <!-- BUSCADOR RESTAURADO -->
-            <input type="text" id="admin-search" placeholder="🔍 Buscar en diccionario..." oninput="renderAdmin()" style="margin-top:10px; font-size: 0.9rem; padding: 8px;">
-            
+            <input type="text" id="admin-search" placeholder="🔍 Buscar palabra..." oninput="renderAdmin()" style="margin-top:10px; font-size: 0.9rem; padding: 8px;">
             <div id="admin-list"></div>
-            
             <div style="display: flex; gap: 5px; width: 100%; margin-bottom: 10px;">
                 <button class="btn-small" style="flex:1; background: #0984e3;" onclick="exportJSON()">Exportar</button>
                 <button class="btn-small" style="flex:1; background: #6c5ce7;" onclick="document.getElementById('file-input').click()">Importar</button>
                 <input type="file" id="file-input" style="display:none" accept=".json" onchange="importJSON(this)">
             </div>
-            <button class="btn btn-primary" onclick="location.reload()">Regresar</button>
+            <button class="btn btn-primary" onclick="showScreen('scr-menu')">Regresar</button>
         </div>
 
-        <!-- JUEGO -->
+        <!-- PANTALLA JUEGO -->
         <div id="scr-game" class="screen">
             <div class="hud">
                 <div id="ui-lives">❤️❤️❤️</div>
@@ -128,30 +143,30 @@
             </div>
             <div class="timer-track"><div id="timer-bar"></div></div>
             <input type="text" id="game-input" placeholder="Escribe aquí..." autocomplete="off">
-            <button id="mirror-btn" class="btn" onclick="execMirror()">🪞 ESPEJO DISPONIBLE</button>
+            <button id="mirror-btn" class="btn" onclick="execMirror()">🪞 ESPEJO</button>
             <div style="display: flex; gap: 5px; width: 100%;">
                 <button class="btn btn-small" onclick="initGame(state.mode)">Reiniciar</button>
                 <button class="btn btn-small" onclick="location.reload()">Menú</button>
             </div>
         </div>
 
-        <!-- OVER -->
+        <!-- GAME OVER -->
         <div id="scr-over" class="screen">
             <div class="magician">😵</div>
-            <h1>FIN DEL DUELO</h1>
+            <h1>FIN DEL JUEGO</h1>
             <h2 id="final-score" style="margin: 20px 0; color: var(--accent);">0 PTS</h2>
             <button class="btn btn-primary" onclick="initGame(state.mode)">Reintentar</button>
+            <button class="btn btn-primary" style="background:none; border: 1px solid white;" onclick="location.reload()">Menú</button>
         </div>
     </div>
 
     <script>
+        /** NORMALIZACIÓN (Elimina tildes) **/
         function normalize(text) {
             return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
-        /**
-         * MOTOR DE SILABEO CORREGIDO (Caso "Ostra" y 3 consonantes)
-         */
+        /** MOTOR DE SILABEO PROFESIONAL (Hiatos y 3 consonantes como 'ostra') **/
         function splitSyllables(word) {
             word = word.toLowerCase().trim();
             const strong = "aeoáéó";
@@ -191,16 +206,12 @@
                         const pair = word.substring(nucE + 1, nucE + 3);
                         cut = inseparable.includes(pair) ? nucE + 1 : nucE + 2;
                     } else if (consCount === 3) {
-                        // REGLA CORREGIDA PARA "OSTRA":
-                        // Si las dos últimas consonantes del grupo de 3 son inseparables, corte es 1-2.
                         const lastPair = word.substring(nucE + 2, nucE + 4);
                         cut = inseparable.includes(lastPair) ? nucE + 2 : nucE + 3;
                     } else if (consCount === 4) {
                         cut = nucE + 3;
                     }
-                } else {
-                    cut = word.length;
-                }
+                } else cut = word.length;
 
                 syllables.push(word.substring(i, cut));
                 i = cut;
@@ -209,7 +220,7 @@
         }
 
         const INITIAL_VOCAB = [
-            "mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "abeja", "abrigo", "aceite", "aceituna", "actor", "adelante", "adivinar", "adentro", "afortunado", "agosto", "alegría", "alimento", "almohada", "altura", "amarillo", "amigo", "ancho", "animal", "anteojos", "antiguo", "anuncio", "aparecer", "apellido", "aprender", "arena", "arroz", "asado", "asiento", "atención", "atrás", "avión", "ayer", "azul", "bailar", "bajo", "balón", "banana", "bandera", "baño", "barato", "barba", "barrio", "bastante", "basura", "batalla", "bebé", "bebida", "belleza", "biblioteca", "bicicleta", "bien", "blanco", "boca", "bolsa", "bolsillo", "bondad", "bonito", "bosque", "botella", "brazo", "brillante", "bueno", "burbuja", "buscar", "caballo", "cabello", "cabeza", "cadena", "café", "caja", "calor", "camino", "camión", "camisa", "campana", "campo", "canción", "cantidad", "capitán", "cara", "caracol", "caramelo", "carne", "carpeta", "carrera", "carro", "cartera", "castillo", "catorce", "cebolla", "cena", "cepillo", "cerca", "cerdo", "cereza", "cerveza", "césped", "chico", "chocolate", "chorizo", "ciento", "ciervo", "cigarro", "cinco", "cincuenta", "cine", "cinta", "cinturón", "ciudad", "claro", "clase", "clima", "cobalto", "cocina", "cocodrilo", "coche", "codicia", "codo", "cofre", "cohete", "cojín", "cola", "colchón", "colegio", "color", "columna", "collar", "comienzo", "compañero", "completo", "comprar", "común", "conmigo", "conocer", "consejo", "contento", "contar", "copa", "coraje", "corbata", "cordero", "correr", "cortina", "corto", "cosa", "cosecha", "costa", "costilla", "cuadro", "cuando", "cuarenta", "cuarto", "cuatro", "cubierto", "cuchara", "cuchillo", "cuello", "cuenta", "cuerda", "cuerno", "cuerpo", "cueva", "cuidado", "culpa", "cuna", "cuota", "curioso", "curso", "curva", "ostra", "astro", "esgrima", "obstruir", "instinto", "transporte", "atleta"
+            "mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "abeja", "abrigo", "aceite", "aceituna", "actor", "adelante", "adivinar", "adentro", "afortunado", "agosto", "alegría", "alimento", "almohada", "altura", "amarillo", "amigo", "ancho", "animal", "anteojos", "antiguo", "anuncio", "aparecer", "apellido", "aprender", "arena", "arroz", "asado", "asiento", "atención", "atrás", "avión", "ayer", "azul", "bailar", "bajo", "balón", "banana", "bandera", "baño", "barato", "barba", "barrio", "bastante", "basura", "batalla", "bebé", "bebida", "belleza", "biblioteca", "bicicleta", "bien", "blanco", "boca", "bolsa", "bolsillo", "bondad", "bonito", "bosque", "botella", "brazo", "brillante", "bueno", "burbuja", "buscar", "caballo", "cabello", "cabeza", "cadena", "café", "caja", "calor", "camino", "camión", "camisa", "campana", "campo", "canción", "cantidad", "capitán", "cara", "caracol", "caramelo", "carne", "carpeta", "carrera", "carro", "cartera", "castillo", "catorce", "cebolla", "cena", "cepillo", "cerca", "cerdo", "cereza", "cerveza", "césped", "chico", "chocolate", "chorizo", "ciento", "ciervo", "cigarro", "cinco", "cincuenta", "cine", "cinta", "cinturón", "ciudad", "claro", "clase", "clima", "cobalto", "cocina", "cocodrilo", "coche", "codicia", "codo", "cofre", "cohete", "cojín", "cola", "colchón", "colegio", "color", "columna", "collar", "comienzo", "compañero", "completo", "comprar", "común", "conmigo", "conocer", "consejo", "contento", "contar", "copa", "coraje", "corbata", "cordero", "correr", "cortina", "corto", "cosa", "cosecha", "costa", "costilla", "cuadro", "cuando", "cuarenta", "cuarto", "cuatro", "cubierto", "cuchara", "cuchillo", "cuello", "cuenta", "cuerda", "cuerno", "cuerpo", "cueva", "cuidado", "culpa", "cuna", "cuota", "curioso", "curso", "curva", "ostra", "astro", "esgrima", "obstruir", "atleta"
         ];
 
         const state = {
@@ -231,10 +242,14 @@
             document.getElementById('vocab-counter').innerText = `Vocabulario: ${state.memory.length} palabras`;
         }
 
-        function showAdmin() {
-            loadMemory();
+
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('scr-admin').classList.add('active');
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showAdmin() {
+            showScreen('scr-admin');
             renderAdmin();
         }
 
@@ -242,15 +257,12 @@
             const list = document.getElementById('admin-list');
             const search = normalize(document.getElementById('admin-search').value);
             list.innerHTML = '';
-            
             const filtered = state.memory.filter(w => normalize(w).includes(search)).sort();
-
             filtered.forEach(word => {
                 const item = document.createElement('div');
                 item.className = 'admin-item';
-                const sArray = splitSyllables(word);
-                item.innerHTML = `<span><strong>${word.toUpperCase()}</strong> (${sArray.join('-')})</span>
-                    <button class="btn-danger" onclick="deleteWordAdmin('${word}')">✕</button>`;
+                item.innerHTML = `<span><strong>${word.toUpperCase()}</strong> (${splitSyllables(word).join('-')})</span>
+                    <button class="btn-danger" style="background:#ff7675; border:none; color:white; padding:4px 8px; border-radius:5px; cursor:pointer;" onclick="deleteWordAdmin('${word}')">✕</button>`;
                 list.appendChild(item);
             });
         }
@@ -284,12 +296,10 @@
             state.wizardMirrorAvailable = true;
             
             updateMirrorUI();
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('scr-game').classList.add('active');
-            
+            showScreen('scr-game');
             updateHUD();
             document.getElementById('ui-word').innerText = "¡EMPIEZA!";
-            document.getElementById('ui-hint').innerText = "Cualquier palabra...";
+            document.getElementById('ui-hint').innerText = "Escribe cualquier palabra...";
             document.getElementById('game-input').value = "";
             document.getElementById('game-input').focus();
             startTimer(20);
@@ -304,7 +314,7 @@
             const firstSyllNorm = normalize(sylls[0]);
 
             if (state.lastSyllable && firstSyllNorm !== state.lastSyllable) {
-                processError(`Sigue siendo "${state.lastSyllable.toUpperCase()}" (Pusiste "${firstSyllNorm.toUpperCase()}")`);
+                processError(`Debe ser "${state.lastSyllable.toUpperCase()}" (Pusiste "${firstSyllNorm.toUpperCase()}")`);
                 return;
             }
             if (state.usedWords.has(val)) { processError("¡Ya usada!"); return; }
@@ -346,12 +356,12 @@
                     state.wizardMirrorAvailable = false;
                     document.getElementById('mago-emoji').innerText = "🪞";
                     document.getElementById('ui-word').innerText = "¡REFLEJO!";
-                    document.getElementById('ui-hint').innerText = "¡Sílaba devuelta!";
+                    document.getElementById('ui-hint').innerText = `¡REFLEJO! Responde tú: "${state.lastSyllable.toUpperCase()}"`;
                     startTimer(10);
                 } else {
                     document.getElementById('mago-emoji').innerText = "😵";
                     document.getElementById('ui-word').innerText = "¡ME RINDO!";
-                    document.getElementById('ui-hint').innerText = "¡Cadena libre!";
+                    document.getElementById('ui-hint').innerText = "¡Libre! Empieza cadena:";
                     state.lastSyllable = "";
                     startTimer(20);
                 }
@@ -366,7 +376,8 @@
             clearInterval(state.timer);
             document.getElementById('mago-emoji').innerText = "🪞";
             document.getElementById('ui-word').innerText = "¡ESPEJO!";
-            setTimeout(wizardTurn, 600);
+            document.getElementById('ui-hint').innerText = `¡REFLEJO! Mago responde a: "${state.lastSyllable.toUpperCase()}"`;
+            setTimeout(wizardTurn, 800);
         }
 
         function updateMirrorUI() {
@@ -385,8 +396,7 @@
             if (state.lives <= 0) {
                 clearInterval(state.timer);
                 document.getElementById('final-score').innerText = `${state.score} PTS`;
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                document.getElementById('scr-over').classList.add('active');
+                showScreen('scr-over');
             } else {
                 document.getElementById('ui-hint').innerText = msg;
                 document.getElementById('game-input').value = "";
@@ -411,9 +421,10 @@
         }
 
         function flash(c) { document.body.classList.add(c); setTimeout(() => document.body.classList.remove(c), 400); }
+        
         function exportJSON() {
             const blob = new Blob([JSON.stringify(state.memory, null, 2)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mago_diccionario.json'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diccionario_mago.json'; a.click();
         }
         function importJSON(input) {
             const reader = new FileReader();
