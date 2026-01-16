@@ -93,7 +93,8 @@
             <div class="magician">🧙‍♂️</div>
             <h1 style="color: var(--accent); font-size: 2rem;">MAGO GOMA</h1>
             <p style="margin-bottom: 20px; opacity: 0.9;">El juego de encadenar palabras</p>
-            <div id="vocab-counter" style="font-size: 0.8rem; margin-bottom: 20px; color: var(--success);"></div>
+            <div id="vocab-counter" style="font-size: 0.8rem; margin-bottom: 20px; color: var(--success);">Cargando diccionario...</div>
+            
             <button class="btn btn-primary" onclick="initGame('classic')">Modo Clásico</button>
             <button class="btn btn-primary" onclick="initGame('sudden')">Muerte Súbita</button>
             <button class="btn btn-accent" onclick="showScreen('scr-how')">Cómo jugar❓</button>
@@ -166,7 +167,7 @@
             return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
-        /** MOTOR DE SILABEO PROFESIONAL (Hiatos y 3 consonantes como 'ostra') **/
+        /** MOTOR DE SILABEO PROFESIONAL **/
         function splitSyllables(word) {
             word = word.toLowerCase().trim();
             const strong = "aeoáéó";
@@ -219,9 +220,8 @@
             return syllables;
         }
 
-        const INITIAL_VOCAB = [
-            "mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "abeja", "abrigo", "aceite", "aceituna", "actor", "adelante", "adivinar", "adentro", "afortunado", "agosto", "alegría", "alimento", "almohada", "altura", "amarillo", "amigo", "ancho", "animal", "anteojos", "antiguo", "anuncio", "aparecer", "apellido", "aprender", "arena", "arroz", "asado", "asiento", "atención", "atrás", "avión", "ayer", "azul", "bailar", "bajo", "balón", "banana", "bandera", "baño", "barato", "barba", "barrio", "bastante", "basura", "batalla", "bebé", "bebida", "belleza", "biblioteca", "bicicleta", "bien", "blanco", "boca", "bolsa", "bolsillo", "bondad", "bonito", "bosque", "botella", "brazo", "brillante", "bueno", "burbuja", "buscar", "caballo", "cabello", "cabeza", "cadena", "café", "caja", "calor", "camino", "camión", "camisa", "campana", "campo", "canción", "cantidad", "capitán", "cara", "caracol", "caramelo", "carne", "carpeta", "carrera", "carro", "cartera", "castillo", "catorce", "cebolla", "cena", "cepillo", "cerca", "cerdo", "cereza", "cerveza", "césped", "chico", "chocolate", "chorizo", "ciento", "ciervo", "cigarro", "cinco", "cincuenta", "cine", "cinta", "cinturón", "ciudad", "claro", "clase", "clima", "cobalto", "cocina", "cocodrilo", "coche", "codicia", "codo", "cofre", "cohete", "cojín", "cola", "colchón", "colegio", "color", "columna", "collar", "comienzo", "compañero", "completo", "comprar", "común", "conmigo", "conocer", "consejo", "contento", "contar", "copa", "coraje", "corbata", "cordero", "correr", "cortina", "corto", "cosa", "cosecha", "costa", "costilla", "cuadro", "cuando", "cuarenta", "cuarto", "cuatro", "cubierto", "cuchara", "cuchillo", "cuello", "cuenta", "cuerda", "cuerno", "cuerpo", "cueva", "cuidado", "culpa", "cuna", "cuota", "curioso", "curso", "curva", "ostra", "astro", "esgrima", "obstruir", "atleta"
-        ];
+        // --- PALABRAS INICIALES (Hardcoded por si falla el fetch) ---
+        const INITIAL_VOCAB = ["mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "ostra", "astro", "atleta"];
 
         const state = {
             mode: 'classic', lives: 3, score: 0, lastSyllable: '',
@@ -230,10 +230,36 @@
         };
 
         const KEY = 'mago_goma_v_pro_final';
+        const JSON_URL = 'palabras.json'; // Nombre del archivo en tu GitHub
 
-        function loadMemory() {
+        /**
+         * CARGA DE MEMORIA (HÍBRIDA: Fetch + LocalStorage)
+         */
+        async function loadMemory() {
+            let baseWords = [...INITIAL_VOCAB];
+
+            // 1. Intentar cargar desde el archivo palabras.json en GitHub
+            try {
+                const response = await fetch(JSON_URL);
+                if (response.ok) {
+                    const remoteWords = await response.json();
+                    // Combinar y eliminar duplicados
+                    baseWords = [...new Set([...baseWords, ...remoteWords])];
+                    console.log("Diccionario remoto cargado correctamente.");
+                }
+            } catch (error) {
+                console.warn("No se encontró el archivo palabras.json o error de formato. Usando vocabulario base.");
+            }
+
+            // 2. Combinar con palabras aprendidas localmente por el usuario
             const saved = localStorage.getItem(KEY);
-            state.memory = saved ? JSON.parse(saved) : [...INITIAL_VOCAB];
+            if (saved) {
+                const localWords = JSON.parse(saved);
+                state.memory = [...new Set([...baseWords, ...localWords])];
+            } else {
+                state.memory = baseWords;
+            }
+
             document.getElementById('vocab-counter').innerText = `Vocabulario: ${state.memory.length} palabras`;
         }
 
@@ -241,7 +267,6 @@
             localStorage.setItem(KEY, JSON.stringify(state.memory)); 
             document.getElementById('vocab-counter').innerText = `Vocabulario: ${state.memory.length} palabras`;
         }
-
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -286,7 +311,6 @@
         }
 
         function initGame(mode) {
-            loadMemory();
             state.mode = mode;
             state.lives = mode === 'classic' ? 3 : 1;
             state.score = 0;
@@ -436,6 +460,8 @@
         }
 
         document.getElementById('game-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleInput(); });
+        
+        // Carga inicial al abrir la página
         loadMemory();
     </script>
 </body>
