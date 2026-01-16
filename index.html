@@ -74,8 +74,6 @@
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        .level-badge { font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; background: var(--primary); margin-left: 5px; }
-
         .btn-small { background: transparent; border: 1px solid white; color: white; width: auto; font-size: 0.7rem; padding: 8px 12px; }
 
         .timer-track { width: 100%; height: 10px; background: #000; border-radius: 10px; margin: 15px 0; overflow: hidden; }
@@ -85,7 +83,10 @@
         .wrong { background-color: #4d1b1b !important; animation: shake 0.3s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 
-        .help-text { text-align: left; font-size: 0.9rem; line-height: 1.4; color: #ccc; }
+        .help-text { text-align: left; font-size: 0.85rem; line-height: 1.4; color: #ccc; }
+        .help-text b { color: var(--accent); }
+        .help-text .point-logic { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; border-left: 3px solid var(--accent); }
+
         .level-selector { display: flex; gap: 5px; margin-bottom: 20px; width: 100%; }
         .level-btn { flex: 1; padding: 10px; font-size: 0.7rem; border-radius: 10px; border: 2px solid var(--primary); background: transparent; color: white; cursor: pointer; }
         .level-btn.active { background: var(--primary); font-weight: bold; }
@@ -118,11 +119,16 @@
         <div id="scr-how" class="screen">
             <h2 style="color: var(--accent); margin-bottom: 15px;">Instrucciones</h2>
             <div class="help-text">
-                <p>1. Escribe una palabra que empiece con la <b>última sílaba</b> de la anterior.</p>
-                <p>2. Las tildes no importan: <b>Jabón</b> termina en <b>bon</b>.</p>
-                <p>3. <b>Niveles:</b> El Mago falla más en Aprendiz y es casi perfecto en Supremo.</p>
-                <p>4. <b>Espejo:</b> Devuelve la sílaba. <b>¡Ojo!</b> No se puede responder a un espejo con otro espejo.</p>
-                <p>5. Si pierdes una vida, la cadena se rompe y el Mago lanza una palabra nueva.</p>
+                <p>1. Escribe una palabra que empiece con la <b>última sílaba</b> de la anterior. Tienes 20 segundos. </p>
+                <p>2. Las tildes no importan al encadenar: <b>Jabón</b> termina en <b>bon</b>, puedes seguir con <b>Bondad</b>.</p>
+                <p>3. El Mago <b>aprende</b> las palabras nuevas que tú escribas.</p>
+                <p>4. <b>Efecto Espejo:</b> Devuelve la sílaba al oponente. Si el Mago no sabe qué decir, ¡lo usará contra ti! Se puede usar una vez por partida.</p>
+                
+                <div class="point-logic">
+                    <p>🏆 <b>Sistema de Puntos:</b></p>
+                    <p>• Cada palabra correcta: <b>+10 puntos</b>.</p>
+                    <p>• Si el Mago se rinde: <b>+20 puntos extra</b>.</p>
+                </div>
             </div>
             <br>
             <button class="btn btn-primary" onclick="showScreen('scr-menu')">Entendido</button>
@@ -190,7 +196,7 @@
             memory: [], 
             mirrorAvailable: true, 
             wizardMirrorAvailable: true,
-            isMirrorInEffect: false // Nueva bandera para evitar espejo sobre espejo
+            isMirrorInEffect: false 
         };
 
         const KEY = 'mago_goma_v_final';
@@ -259,10 +265,13 @@
             } catch (error) {}
             const saved = localStorage.getItem(KEY);
             state.memory = saved ? [...new Set([...baseWords, ...JSON.parse(saved)])] : baseWords;
-            document.getElementById('vocab-counter').innerText = `Vocabulario: ${state.memory.length} palabras`;
+            document.getElementById('vocab-counter').innerText = `Vocabulario del Mago: ${state.memory.length} palabras`;
         }
 
-        function saveMemory() { localStorage.setItem(KEY, JSON.stringify(state.memory)); }
+        function saveMemory() { 
+            localStorage.setItem(KEY, JSON.stringify(state.memory)); 
+            document.getElementById('vocab-counter').innerText = `Vocabulario del Mago: ${state.memory.length} palabras`;
+        }
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -345,7 +354,7 @@
             if (rawLast.startsWith('rr')) rawLast = rawLast.substring(1); 
             state.lastSyllable = normalize(rawLast);
 
-            state.isMirrorInEffect = false; // El usuario respondió normal, se libera restricción
+            state.isMirrorInEffect = false; 
             updateMirrorUI();
 
             flash('correct');
@@ -363,7 +372,6 @@
             
             const possible = state.memory.filter(w => normalize(splitSyllables(w)[0]) === state.lastSyllable && !state.usedWords.has(w));
             
-            // Lógica de "Decidir si encuentra palabra" según nivel
             if (possible.length > 0 && Math.random() < successProbability) {
                 const pick = possible[Math.floor(Math.random() * possible.length)];
                 const s = splitSyllables(pick);
@@ -379,7 +387,6 @@
                 document.getElementById('ui-hint').innerText = `Tu turno: "${state.lastSyllable.toUpperCase()}"`;
                 startTimer(Math.max(6, 20 - (state.score/80)));
             } else {
-                // Si el mago no sabe/falla, intenta espejo si no estamos ya en uno
                 if (state.wizardMirrorAvailable && state.lastSyllable !== '' && !state.isMirrorInEffect) {
                     state.wizardMirrorAvailable = false;
                     state.isMirrorInEffect = true;
@@ -395,6 +402,7 @@
                     state.lastSyllable = "";
                     state.isMirrorInEffect = false;
                     updateMirrorUI();
+                    state.score += 20; // Bonus por rendición
                     startTimer(20);
                 }
             }
@@ -437,7 +445,6 @@
                 document.getElementById('final-score').innerText = `${state.score} PTS`;
                 showScreen('scr-over');
             } else {
-                // AL PERDER VIDA: Reinicio de cadena
                 state.lastSyllable = "";
                 state.isMirrorInEffect = false;
                 updateMirrorUI();
