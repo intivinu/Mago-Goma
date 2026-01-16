@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mago Goma - 100 Palabras Iniciales</title>
+    <title>Mago Goma - El juego de encadenar palabras</title>
     <style>
         :root {
             --primary: #6c5ce7;
@@ -12,6 +12,8 @@
             --success: #55efc4;
             --bg: #1a1a2e;
             --text: #ffffff;
+            --mirror-on: #00d2d3;
+            --mirror-off: #576574;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -39,7 +41,7 @@
             border-radius: 40px;
             border: 4px solid var(--primary);
             backdrop-filter: blur(15px);
-            box-shadow: 0 0 40px rgba(108, 92, 231, 0.4);
+            box-shadow: 0 0 50px rgba(108, 92, 231, 0.4);
         }
 
         .screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
@@ -50,17 +52,25 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
         .word-card { background: rgba(0,0,0,0.4); width: 100%; padding: 25px; border-radius: 30px; margin: 15px 0; border: 2px solid var(--primary); }
-        .current-word { font-size: 2.8rem; color: var(--accent); text-transform: uppercase; font-weight: 900; }
+        .current-word { font-size: 2.6rem; color: var(--accent); text-transform: uppercase; font-weight: 900; }
         .syllable-hint { margin-top: 10px; color: var(--success); font-size: 1.1rem; font-weight: bold; }
 
-        #admin-list { width: 100%; height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 10px 0; padding: 5px; }
-        .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
+        #admin-list { width: 100%; height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 10px 0; padding: 5px; border: 1px solid var(--primary); }
+        .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; }
         
         input { width: 100%; padding: 12px; border-radius: 15px; border: 3px solid var(--primary); font-size: 1.2rem; text-align: center; outline: none; margin-bottom: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; width: 100%; margin-bottom: 8px; transition: 0.2s; }
+        
+        .btn { padding: 12px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; width: 100%; margin-bottom: 8px; transition: 0.3s; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-accent { background: var(--accent); color: #1a1a2e; }
-        .btn-danger { background: var(--danger); color: white; width: auto; padding: 5px 10px; font-size: 0.7rem; }
+        
+        #mirror-btn { background: var(--mirror-off); color: #1a1a2e; }
+        #mirror-btn.available { 
+            background: var(--mirror-on); 
+            box-shadow: 0 0 15px var(--mirror-on);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
         .btn-small { background: transparent; border: 1px solid white; color: white; width: auto; font-size: 0.7rem; padding: 8px 12px; }
 
         .timer-track { width: 100%; height: 10px; background: #000; border-radius: 10px; margin: 15px 0; overflow: hidden; }
@@ -74,7 +84,7 @@
 <body>
 
     <div id="game-container">
-        <!-- PANTALLA MENU -->
+        <!-- MENU -->
         <div id="scr-menu" class="screen active">
             <div class="magician">🧙‍♂️</div>
             <h1 style="color: var(--accent); font-size: 2.2rem;">MAGO GOMA</h1>
@@ -82,18 +92,21 @@
             <div id="vocab-counter" style="font-size: 0.8rem; margin-bottom: 20px; color: var(--success);"></div>
             <button class="btn btn-primary" onclick="initGame('classic')">Modo Clásico</button>
             <button class="btn btn-primary" onclick="initGame('sudden')">Muerte Súbita</button>
-            <button class="btn btn-accent" onclick="showAdmin()">🔧 Administrar Palabras</button>
+            <button class="btn btn-accent" style="background:var(--accent); color:black;" onclick="showAdmin()">🔧 Diccionario / Admin</button>
         </div>
 
-        <!-- PANTALLA ADMIN -->
+        <!-- ADMIN -->
         <div id="scr-admin" class="screen">
             <h2 style="color: var(--accent); margin-bottom: 10px;">BIBLIOTECA MÁGICA</h2>
             <div style="display: flex; gap: 5px; width: 100%;">
-                <input type="text" id="add-word-input" placeholder="Nueva palabra..." style="margin:0;">
+                <input type="text" id="add-word-input" placeholder="Nueva palabra..." style="margin:0; font-size: 1rem;">
                 <button class="btn btn-primary" style="width: auto; margin:0;" onclick="addWordAdmin()">Añadir</button>
             </div>
-            <input type="text" id="admin-search" placeholder="Buscar..." oninput="renderAdmin()" style="margin-top:10px; font-size: 0.9rem;">
+            <!-- BUSCADOR RESTAURADO -->
+            <input type="text" id="admin-search" placeholder="🔍 Buscar en diccionario..." oninput="renderAdmin()" style="margin-top:10px; font-size: 0.9rem; padding: 8px;">
+            
             <div id="admin-list"></div>
+            
             <div style="display: flex; gap: 5px; width: 100%; margin-bottom: 10px;">
                 <button class="btn-small" style="flex:1; background: #0984e3;" onclick="exportJSON()">Exportar</button>
                 <button class="btn-small" style="flex:1; background: #6c5ce7;" onclick="document.getElementById('file-input').click()">Importar</button>
@@ -102,7 +115,7 @@
             <button class="btn btn-primary" onclick="location.reload()">Regresar</button>
         </div>
 
-        <!-- PANTALLA JUEGO -->
+        <!-- JUEGO -->
         <div id="scr-game" class="screen">
             <div class="hud">
                 <div id="ui-lives">❤️❤️❤️</div>
@@ -115,99 +128,97 @@
             </div>
             <div class="timer-track"><div id="timer-bar"></div></div>
             <input type="text" id="game-input" placeholder="Escribe aquí..." autocomplete="off">
-            <button id="mirror-btn" class="btn btn-accent" onclick="execMirror()">🪞 ESPEJO</button>
+            <button id="mirror-btn" class="btn" onclick="execMirror()">🪞 ESPEJO DISPONIBLE</button>
             <div style="display: flex; gap: 5px; width: 100%;">
                 <button class="btn btn-small" onclick="initGame(state.mode)">Reiniciar</button>
                 <button class="btn btn-small" onclick="location.reload()">Menú</button>
             </div>
         </div>
 
-        <!-- PANTALLA GAME OVER -->
+        <!-- OVER -->
         <div id="scr-over" class="screen">
             <div class="magician">😵</div>
-            <h1>FIN DEL JUEGO</h1>
+            <h1>FIN DEL DUELO</h1>
             <h2 id="final-score" style="margin: 20px 0; color: var(--accent);">0 PTS</h2>
             <button class="btn btn-primary" onclick="initGame(state.mode)">Reintentar</button>
         </div>
     </div>
 
     <script>
-        /** MOTOR DE SILABEO PROFESIONAL (Hiatos, Diptongos y RR) **/
+        function normalize(text) {
+            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        }
+
+        /**
+         * MOTOR DE SILABEO CORREGIDO (Caso "Ostra" y 3 consonantes)
+         */
         function splitSyllables(word) {
             word = word.toLowerCase().trim();
-            const fuerte = "aeoáéó";
-            const debilAcentuada = "íú";
-            const debil = "iuü";
-            const vocales = fuerte + debilAcentuada + debil;
+            const strong = "aeoáéó";
+            const accentedWeak = "íú";
+            const weak = "iuü";
+            const vowels = strong + accentedWeak + weak;
+            const inseparable = ["bl","br","cl","cr","dl","dr","fl","fr","gl","gr","pl","pr","tr","ch","ll","rr"];
             
             let syllables = [];
-            let current = "";
             let i = 0;
 
             while (i < word.length) {
-                let char = word[i];
-                current += char;
-
-                if (vocales.includes(char)) {
-                    let next = i + 1;
-                    
-                    // Lógica de Hiato (Ruptura)
-                    if (next < word.length && vocales.includes(word[next])) {
-                        let v1 = char;
-                        let v2 = word[next];
-                        const esHiato = (fuerte.includes(v1) && fuerte.includes(v2)) || 
-                                        (fuerte.includes(v1) && debilAcentuada.includes(v2)) || 
-                                        (debilAcentuada.includes(v1) && fuerte.includes(v2));
-                        
-                        if (esHiato) {
-                            syllables.push(current);
-                            current = "";
-                        }
-                    } 
-                    // Lógica de Consonantes
-                    else if (next < word.length) {
-                        let j = next;
-                        while (j < word.length && !vocales.includes(word[j])) j++;
-                        
-                        if (j < word.length) { 
-                            let consBetween = j - next;
-                            let cut = 0;
-
-                            if (consBetween === 1) {
-                                cut = 0; 
-                            } else if (consBetween >= 2) {
-                                const pair = word.substring(next, next + 2);
-                                const inseparable = ["bl","br","cl","cr","dl","dr","fl","fr","gl","gr","pl","pr","tr","ch","ll","rr"];
-                                cut = inseparable.includes(pair) ? 0 : 1;
-                                if (consBetween === 3 && !inseparable.includes(pair)) cut = 2;
-                            }
-                            
-                            for(let k = 0; k < cut; k++) {
-                                current += word[next + k];
-                                i++;
-                            }
-                            syllables.push(current);
-                            current = "";
-                        }
-                    }
+                let nucS = i;
+                while (nucS < word.length && !vowels.includes(word[nucS])) nucS++;
+                if (nucS >= word.length) {
+                    if (syllables.length > 0) syllables[syllables.length - 1] += word.substring(i);
+                    break;
                 }
-                i++;
+                
+                let nucE = nucS;
+                while (nucE + 1 < word.length && vowels.includes(word[nucE + 1])) {
+                    let v1 = word[nucE], v2 = word[nucE + 1];
+                    const hiatus = (strong.includes(v1) && strong.includes(v2)) || 
+                                   (strong.includes(v1) && accentedWeak.includes(v2)) || 
+                                   (accentedWeak.includes(v1) && strong.includes(v2));
+                    if (hiatus) break;
+                    nucE++;
+                }
+
+                let nextNuc = nucE + 1;
+                while (nextNuc < word.length && !vowels.includes(word[nextNuc])) nextNuc++;
+
+                let cut = nucE + 1;
+                if (nextNuc < word.length) {
+                    let consCount = nextNuc - (nucE + 1);
+                    if (consCount === 2) {
+                        const pair = word.substring(nucE + 1, nucE + 3);
+                        cut = inseparable.includes(pair) ? nucE + 1 : nucE + 2;
+                    } else if (consCount === 3) {
+                        // REGLA CORREGIDA PARA "OSTRA":
+                        // Si las dos últimas consonantes del grupo de 3 son inseparables, corte es 1-2.
+                        const lastPair = word.substring(nucE + 2, nucE + 4);
+                        cut = inseparable.includes(lastPair) ? nucE + 2 : nucE + 3;
+                    } else if (consCount === 4) {
+                        cut = nucE + 3;
+                    }
+                } else {
+                    cut = word.length;
+                }
+
+                syllables.push(word.substring(i, cut));
+                i = cut;
             }
-            if (current) syllables.push(current);
             return syllables;
         }
 
         const INITIAL_VOCAB = [
-            "mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro"
+            "mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "abeja", "abrigo", "aceite", "aceituna", "actor", "adelante", "adivinar", "adentro", "afortunado", "agosto", "alegría", "alimento", "almohada", "altura", "amarillo", "amigo", "ancho", "animal", "anteojos", "antiguo", "anuncio", "aparecer", "apellido", "aprender", "arena", "arroz", "asado", "asiento", "atención", "atrás", "avión", "ayer", "azul", "bailar", "bajo", "balón", "banana", "bandera", "baño", "barato", "barba", "barrio", "bastante", "basura", "batalla", "bebé", "bebida", "belleza", "biblioteca", "bicicleta", "bien", "blanco", "boca", "bolsa", "bolsillo", "bondad", "bonito", "bosque", "botella", "brazo", "brillante", "bueno", "burbuja", "buscar", "caballo", "cabello", "cabeza", "cadena", "café", "caja", "calor", "camino", "camión", "camisa", "campana", "campo", "canción", "cantidad", "capitán", "cara", "caracol", "caramelo", "carne", "carpeta", "carrera", "carro", "cartera", "castillo", "catorce", "cebolla", "cena", "cepillo", "cerca", "cerdo", "cereza", "cerveza", "césped", "chico", "chocolate", "chorizo", "ciento", "ciervo", "cigarro", "cinco", "cincuenta", "cine", "cinta", "cinturón", "ciudad", "claro", "clase", "clima", "cobalto", "cocina", "cocodrilo", "coche", "codicia", "codo", "cofre", "cohete", "cojín", "cola", "colchón", "colegio", "color", "columna", "collar", "comienzo", "compañero", "completo", "comprar", "común", "conmigo", "conocer", "consejo", "contento", "contar", "copa", "coraje", "corbata", "cordero", "correr", "cortina", "corto", "cosa", "cosecha", "costa", "costilla", "cuadro", "cuando", "cuarenta", "cuarto", "cuatro", "cubierto", "cuchara", "cuchillo", "cuello", "cuenta", "cuerda", "cuerno", "cuerpo", "cueva", "cuidado", "culpa", "cuna", "cuota", "curioso", "curso", "curva", "ostra", "astro", "esgrima", "obstruir", "instinto", "transporte", "atleta"
         ];
 
         const state = {
             mode: 'classic', lives: 3, score: 0, lastSyllable: '',
             timer: null, timeLeft: 20, usedWords: new Set(),
-            memory: []
+            memory: [], mirrorAvailable: true, wizardMirrorAvailable: true
         };
 
-        const KEY = 'mago_goma_v100_vocab';
+        const KEY = 'mago_goma_v_pro_final';
 
         function loadMemory() {
             const saved = localStorage.getItem(KEY);
@@ -229,12 +240,16 @@
 
         function renderAdmin() {
             const list = document.getElementById('admin-list');
-            const search = document.getElementById('admin-search').value.toLowerCase();
+            const search = normalize(document.getElementById('admin-search').value);
             list.innerHTML = '';
-            state.memory.filter(w => w.includes(search)).sort().forEach(word => {
+            
+            const filtered = state.memory.filter(w => normalize(w).includes(search)).sort();
+
+            filtered.forEach(word => {
                 const item = document.createElement('div');
                 item.className = 'admin-item';
-                item.innerHTML = `<span><strong>${word.toUpperCase()}</strong> (${splitSyllables(word).join('-')})</span>
+                const sArray = splitSyllables(word);
+                item.innerHTML = `<span><strong>${word.toUpperCase()}</strong> (${sArray.join('-')})</span>
                     <button class="btn-danger" onclick="deleteWordAdmin('${word}')">✕</button>`;
                 list.appendChild(item);
             });
@@ -243,32 +258,19 @@
         function addWordAdmin() {
             const input = document.getElementById('add-word-input');
             const word = input.value.toLowerCase().trim();
-            if (word.length < 2) return alert("Mínimo 2 letras");
-            if (state.memory.includes(word)) return alert("Ya existe");
-            state.memory.push(word);
-            saveMemory();
-            input.value = '';
-            renderAdmin();
+            if (word.length < 2) return;
+            if (!state.memory.includes(word)) {
+                state.memory.push(word);
+                saveMemory();
+                input.value = '';
+                renderAdmin();
+            }
         }
 
         function deleteWordAdmin(w) {
             state.memory = state.memory.filter(x => x !== w);
             saveMemory();
             renderAdmin();
-        }
-
-        function exportJSON() {
-            const blob = new Blob([JSON.stringify(state.memory, null, 2)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mago_vocabulario.json'; a.click();
-        }
-
-        function importJSON(input) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const data = JSON.parse(e.target.result);
-                if(Array.isArray(data)) { state.memory = data; saveMemory(); renderAdmin(); alert("Vocabulario importado"); }
-            };
-            reader.readAsText(input.files[0]);
         }
 
         function initGame(mode) {
@@ -278,8 +280,13 @@
             state.score = 0;
             state.usedWords.clear();
             state.lastSyllable = '';
+            state.mirrorAvailable = true;
+            state.wizardMirrorAvailable = true;
+            
+            updateMirrorUI();
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('scr-game').classList.add('active');
+            
             updateHUD();
             document.getElementById('ui-word').innerText = "¡EMPIEZA!";
             document.getElementById('ui-hint').innerText = "Cualquier palabra...";
@@ -292,11 +299,12 @@
             const input = document.getElementById('game-input');
             const val = input.value.toLowerCase().trim();
             if (val.length < 2) return;
-            const sylls = splitSyllables(val);
-            const firstSyll = sylls[0];
 
-            if (state.lastSyllable && firstSyll !== state.lastSyllable) {
-                processError(`Debe ser "${state.lastSyllable.toUpperCase()}" (Pusiste "${firstSyll.toUpperCase()}")`);
+            const sylls = splitSyllables(val);
+            const firstSyllNorm = normalize(sylls[0]);
+
+            if (state.lastSyllable && firstSyllNorm !== state.lastSyllable) {
+                processError(`Sigue siendo "${state.lastSyllable.toUpperCase()}" (Pusiste "${firstSyllNorm.toUpperCase()}")`);
                 return;
             }
             if (state.usedWords.has(val)) { processError("¡Ya usada!"); return; }
@@ -304,9 +312,10 @@
             if (!state.memory.includes(val)) { state.memory.push(val); saveMemory(); }
             state.usedWords.add(val);
             state.score += 10;
-            let last = sylls[sylls.length - 1];
-            if (last.startsWith('rr')) last = last.substring(1); 
-            state.lastSyllable = last;
+            
+            let rawLast = sylls[sylls.length - 1];
+            if (rawLast.startsWith('rr')) rawLast = rawLast.substring(1); 
+            state.lastSyllable = normalize(rawLast);
 
             flash('correct');
             document.getElementById('ui-word').innerText = val;
@@ -318,34 +327,57 @@
         }
 
         function wizardTurn() {
-            const possible = state.memory.filter(w => splitSyllables(w)[0] === state.lastSyllable && !state.usedWords.has(w));
+            const possible = state.memory.filter(w => normalize(splitSyllables(w)[0]) === state.lastSyllable && !state.usedWords.has(w));
+            
             if (possible.length > 0) {
                 const pick = possible[Math.floor(Math.random() * possible.length)];
                 const s = splitSyllables(pick);
                 state.usedWords.add(pick);
-                let last = s[s.length - 1];
-                if (last.startsWith('rr')) last = last.substring(1);
-                state.lastSyllable = last;
+                let rawLast = s[s.length - 1];
+                if (rawLast.startsWith('rr')) rawLast = rawLast.substring(1);
+                state.lastSyllable = normalize(rawLast);
+
                 document.getElementById('mago-emoji').innerText = "🧙‍♂️";
                 document.getElementById('ui-word').innerText = pick;
                 document.getElementById('ui-hint').innerText = `Tu turno: "${state.lastSyllable.toUpperCase()}"`;
-                startTimer(Math.max(6, 20 - (state.score/70)));
+                startTimer(Math.max(6, 20 - (state.score/80)));
             } else {
-                document.getElementById('mago-emoji').innerText = "😵";
-                document.getElementById('ui-word').innerText = "¡ME RINDO!";
-                document.getElementById('ui-hint').innerText = "¡Libre! Empieza cadena:";
-                state.lastSyllable = "";
-                startTimer(20);
+                if (state.wizardMirrorAvailable && state.lastSyllable !== '') {
+                    state.wizardMirrorAvailable = false;
+                    document.getElementById('mago-emoji').innerText = "🪞";
+                    document.getElementById('ui-word').innerText = "¡REFLEJO!";
+                    document.getElementById('ui-hint').innerText = "¡Sílaba devuelta!";
+                    startTimer(10);
+                } else {
+                    document.getElementById('mago-emoji').innerText = "😵";
+                    document.getElementById('ui-word').innerText = "¡ME RINDO!";
+                    document.getElementById('ui-hint').innerText = "¡Cadena libre!";
+                    state.lastSyllable = "";
+                    startTimer(20);
+                }
             }
             updateHUD();
         }
 
         function execMirror() {
-            if(!state.lastSyllable) return;
+            if(!state.mirrorAvailable || !state.lastSyllable) return;
+            state.mirrorAvailable = false;
+            updateMirrorUI();
             clearInterval(state.timer);
             document.getElementById('mago-emoji').innerText = "🪞";
             document.getElementById('ui-word').innerText = "¡ESPEJO!";
             setTimeout(wizardTurn, 600);
+        }
+
+        function updateMirrorUI() {
+            const btn = document.getElementById('mirror-btn');
+            if (state.mirrorAvailable) {
+                btn.classList.add('available');
+                btn.innerText = "🪞 ESPEJO DISPONIBLE";
+            } else {
+                btn.classList.remove('available');
+                btn.innerText = "🪞 ESPEJO AGOTADO";
+            }
         }
 
         function processError(msg) {
@@ -379,6 +411,19 @@
         }
 
         function flash(c) { document.body.classList.add(c); setTimeout(() => document.body.classList.remove(c), 400); }
+        function exportJSON() {
+            const blob = new Blob([JSON.stringify(state.memory, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mago_diccionario.json'; a.click();
+        }
+        function importJSON(input) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const data = JSON.parse(e.target.result);
+                if(Array.isArray(data)) { state.memory = data; saveMemory(); renderAdmin(); alert("Importado!"); }
+            };
+            reader.readAsText(input.files[0]);
+        }
+
         document.getElementById('game-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleInput(); });
         loadMemory();
     </script>
