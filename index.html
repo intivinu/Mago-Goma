@@ -82,6 +82,11 @@
 
         .help-text { text-align: left; font-size: 0.85rem; line-height: 1.4; color: #ccc; }
         .help-text b { color: var(--accent); }
+        .help-text .point-logic { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; border-left: 3px solid var(--accent); }
+
+        .level-selector { display: flex; gap: 5px; margin-bottom: 20px; width: 100%; }
+        .level-btn { flex: 1; padding: 10px; font-size: 0.7rem; border-radius: 10px; border: 2px solid var(--primary); background: transparent; color: white; cursor: pointer; }
+        .level-btn.active { background: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -94,10 +99,10 @@
             <p style="margin-bottom: 20px; opacity: 0.9;">el juego de encadenar palabras</p>
             
             <p style="font-size: 0.8rem; margin-bottom: 10px;">Dificultad del Mago:</p>
-            <div class="level-selector" style="display: flex; gap: 5px; margin-bottom: 20px; width: 100%;">
-                <button class="level-btn active" style="flex: 1; padding: 10px; font-size: 0.7rem; border-radius: 10px; border: 2px solid var(--primary); background: var(--primary); color: white; cursor: pointer; font-weight: bold;" onclick="setLevel('aprendiz', this)">Aprendiz</button>
-                <button class="level-btn" style="flex: 1; padding: 10px; font-size: 0.7rem; border-radius: 10px; border: 2px solid var(--primary); background: transparent; color: white; cursor: pointer;" onclick="setLevel('sabio', this)">Sabio</button>
-                <button class="level-btn" style="flex: 1; padding: 10px; font-size: 0.7rem; border-radius: 10px; border: 2px solid var(--primary); background: transparent; color: white; cursor: pointer;" onclick="setLevel('supremo', this)">Supremo</button>
+            <div class="level-selector">
+                <button class="level-btn active" onclick="setLevel('aprendiz', this)">Aprendiz</button>
+                <button class="level-btn" onclick="setLevel('sabio', this)">Sabio</button>
+                <button class="level-btn" onclick="setLevel('supremo', this)">Supremo</button>
             </div>
 
             <button class="btn btn-primary" onclick="initGame('classic')">Modo Clásico</button>
@@ -118,10 +123,16 @@
             <h2 style="color: var(--accent); margin-bottom: 15px;">Instrucciones</h2>
             <div class="help-text">
                 <p>1. Escribe una palabra que empiece con la <b>última sílaba</b> de la anterior.</p>
-                <p>2. <b>Validación:</b> Solo se aceptan palabras que existan en el Libro Mágico del Mago.</p>
-                <p>3. Las tildes no importan: <b>Jabón</b> termina en <b>bon</b>.</p>
-                <p>4. <b>Niveles:</b> Aprendiz (60%), Sabio (80%), Supremo (99%).</p>
-                <p>5. <b>Espejo:</b> Devuelve la sílaba al oponente. No se puede responder a un espejo con otro.</p>
+                <p>2. Las tildes no importan: <b>Jabón</b> termina en <b>bon</b>.</p>
+                <p>3. <b>Niveles:</b> El Mago tiene una tasa de acierto de 60%, 80% o 99%.</p>
+                <p>4. <b>Espejo:</b> Devuelve la sílaba. No se puede responder a un espejo con otro.</p>
+                <p>5. Si pierdes vida, el Mago lanza una palabra libre para reiniciar la cadena.</p>
+                
+                <div class="point-logic">
+                    <p>🏆 <b>Sistema de Puntos:</b></p>
+                    <p>• Palabra correcta: <b>+10 puntos</b>.</p>
+                    <p>• Mago se rinde: <b>+20 puntos extra</b>.</p>
+                </div>
             </div>
             <br>
             <button class="btn btn-primary" onclick="showScreen('scr-menu')">Entendido</button>
@@ -170,7 +181,6 @@
             timeLeft: 20, 
             usedWords: new Set(),
             memory: [], 
-            memorySet: new Set(), // Optimización para búsqueda instantánea
             mirrorAvailable: true, 
             wizardMirrorAvailable: true,
             isMirrorInEffect: false 
@@ -186,14 +196,8 @@
 
         function setLevel(lvl, btn) {
             state.level = lvl;
-            document.querySelectorAll('.level-btn').forEach(b => {
-                b.classList.remove('active');
-                b.style.background = "transparent";
-                b.style.fontWeight = "normal";
-            });
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            btn.style.background = "var(--primary)";
-            btn.style.fontWeight = "bold";
         }
 
         function splitSyllables(word) {
@@ -212,7 +216,8 @@
                 let nucE = nucS;
                 while (nucE + 1 < word.length && vowels.includes(word[nucE + 1])) {
                     let v1 = word[nucE], v2 = word[nucE + 1];
-                    if ((strong.includes(v1) && strong.includes(v2)) || (strong.includes(v1) && accentedWeak.includes(v2)) || (accentedWeak.includes(v1) && strong.includes(v2))) break;
+                    const hiatus = (strong.includes(v1) && strong.includes(v2)) || (strong.includes(v1) && accentedWeak.includes(v2)) || (accentedWeak.includes(v1) && strong.includes(v2));
+                    if (hiatus) break;
                     nucE++;
                 }
                 let nextNuc = nucE + 1;
@@ -221,11 +226,11 @@
                 if (nextNuc < word.length) {
                     let consCount = nextNuc - (nucE + 1);
                     if (consCount === 2) {
-                        const p = word.substring(nucE + 1, nucE + 3);
-                        cut = inseparable.includes(p) ? nucE + 1 : nucE + 2;
+                        const pair = word.substring(nucE + 1, nucE + 3);
+                        cut = inseparable.includes(pair) ? nucE + 1 : nucE + 2;
                     } else if (consCount === 3) {
-                        const p = word.substring(nucE + 2, nucE + 4);
-                        cut = inseparable.includes(p) ? nucE + 2 : nucE + 3;
+                        const lastPair = word.substring(nucE + 2, nucE + 4);
+                        cut = inseparable.includes(lastPair) ? nucE + 2 : nucE + 3;
                     } else if (consCount === 4) cut = nucE + 3;
                 } else cut = word.length;
                 syllables.push(word.substring(i, cut));
@@ -239,17 +244,14 @@
             try {
                 const response = await fetch(JSON_URL);
                 if (response.ok) {
-                    baseWords = await response.json();
+                    const remoteWords = await response.json();
+                    baseWords = remoteWords; // 67k+ palabras
                 }
-            } catch (error) { console.warn("Diccionario externo no encontrado."); }
+            } catch (error) { console.warn("Error cargando JSON."); }
             
             const saved = localStorage.getItem(KEY_LEARNED);
             const learned = saved ? JSON.parse(saved) : [];
-            
             state.memory = [...new Set([...baseWords, ...learned])];
-            // Construimos el Set para validación O(1)
-            state.memorySet = new Set(state.memory.map(w => w.toLowerCase().trim()));
-            
             document.getElementById('vocab-counter').innerText = `Mago listo (${state.memory.length} palabras)`;
         }
 
@@ -286,27 +288,20 @@
             const val = input.value.toLowerCase().trim();
             if (val.length < 2) return;
 
-            // VALIDACIÓN DE EXISTENCIA EN DICCIONARIO
-            if (!state.memorySet.has(val)) {
-                processError(`¡"${val.toUpperCase()}" no está en mi libro!`);
-                return;
-            }
-
             const sylls = splitSyllables(val);
             const firstSyllNorm = normalize(sylls[0]);
 
-            // VALIDACIÓN DE CADENA
             if (state.lastSyllable && firstSyllNorm !== state.lastSyllable) {
-                processError(`Debe empezar por "${state.lastSyllable.toUpperCase()}"`);
+                processError(`Sigue siendo "${state.lastSyllable.toUpperCase()}"`);
                 return;
             }
+            if (state.usedWords.has(val)) { processError("¡Ya usada!"); return; }
 
-            if (state.usedWords.has(val)) {
-                processError("¡Esa palabra ya se usó!");
-                return;
+            if (!state.memory.includes(val)) { 
+                state.memory.push(val); 
+                saveLearned(val); 
             }
 
-            // ÉXITO
             state.usedWords.add(val);
             state.score += 10;
             let last = normalize(sylls[sylls.length - 1]);
@@ -326,16 +321,16 @@
             const rates = { aprendiz: 0.6, sabio: 0.8, supremo: 0.99 };
             const success = Math.random() < rates[state.level];
             
+            // OPTIMIZACIÓN: Búsqueda rápida en grandes volúmenes
             let pick = null;
             if (success) {
                 const target = state.lastSyllable;
                 const candidates = [];
-                // Búsqueda en la memoria
                 for(let i=0; i<state.memory.length; i++) {
                     const w = state.memory[i];
                     if (!state.usedWords.has(w) && normalize(splitSyllables(w)[0]) === target) {
                         candidates.push(w);
-                        if (candidates.length > 50) break;
+                        if (candidates.length > 50) break; // Suficiente variedad
                     }
                 }
                 if (candidates.length > 0) pick = candidates[Math.floor(Math.random() * candidates.length)];
@@ -366,7 +361,7 @@
                 } else {
                     document.getElementById('mago-emoji').innerText = "😵";
                     document.getElementById('ui-word').innerText = "¡ME RINDO!";
-                    document.getElementById('ui-hint').innerText = "¡Bonus! Lanza una libre:";
+                    document.getElementById('ui-hint').innerText = "¡Ganas bonus! Lanza palabra libre:";
                     state.lastSyllable = "";
                     state.isMirrorInEffect = false;
                     updateMirrorUI();
@@ -407,8 +402,8 @@
                 state.isMirrorInEffect = false;
                 updateMirrorUI();
                 document.getElementById('mago-emoji').innerText = "🔮";
-                document.getElementById('ui-word').innerText = "¡UPS!";
-                document.getElementById('ui-hint').innerText = msg + " Lanza una libre.";
+                document.getElementById('ui-word').innerText = "¡REINTENTO!";
+                document.getElementById('ui-hint').innerText = "Cadena reiniciada. ¡Lanza palabra libre!";
                 document.getElementById('game-input').value = "";
                 startTimer(20);
             }
@@ -421,7 +416,7 @@
             state.timer = setInterval(() => {
                 state.timeLeft -= 0.1;
                 bar.style.width = (state.timeLeft / sec) * 100 + "%";
-                if (state.timeLeft <= 0) processError("¡TIEMPO AGOTADO!");
+                if (state.timeLeft <= 0) processError("¡TIEMPO!");
             }, 100);
         }
 
