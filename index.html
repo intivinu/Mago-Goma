@@ -55,6 +55,9 @@
         .current-word { font-size: 2.6rem; color: var(--accent); text-transform: uppercase; font-weight: 900; }
         .syllable-hint { margin-top: 10px; color: var(--success); font-size: 1.1rem; font-weight: bold; }
 
+        #admin-list { width: 100%; height: 180px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 10px 0; padding: 5px; border: 1px solid var(--primary); }
+        .admin-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; }
+        
         input { width: 100%; padding: 12px; border-radius: 15px; border: 3px solid var(--primary); font-size: 1.2rem; text-align: center; outline: none; margin-bottom: 10px; }
         
         .btn { padding: 12px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; width: 100%; margin-bottom: 8px; transition: 0.3s; }
@@ -71,7 +74,7 @@
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        .btn-small { background: transparent; border: 1px solid white; color: white; width: auto; font-size: 0.7rem; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+        .btn-small { background: transparent; border: 1px solid white; color: white; width: auto; font-size: 0.7rem; padding: 8px 12px; }
 
         .timer-track { width: 100%; height: 10px; background: #000; border-radius: 10px; margin: 15px 0; overflow: hidden; }
         #timer-bar { width: 100%; height: 100%; background: linear-gradient(90deg, var(--success), var(--accent), var(--danger)); transition: width 0.1s linear; }
@@ -108,14 +111,8 @@
             <button class="btn btn-primary" onclick="initGame('classic')">Modo Clásico</button>
             <button class="btn btn-primary" onclick="initGame('sudden')">Muerte Súbita</button>
             <button class="btn btn-accent" onclick="showScreen('scr-how')">Cómo jugar❓</button>
-            
-            <div style="display: flex; gap: 5px; margin-top: 20px;">
-                <button class="btn-small" onclick="exportJSON()">Exportar 💾</button>
-                <button class="btn-small" onclick="document.getElementById('file-input').click()">Importar 📂</button>
-                <input type="file" id="file-input" style="display:none" accept=".json" onchange="importJSON(this)">
-            </div>
-            
-            <div id="vocab-counter" style="font-size: 0.7rem; margin-top: 15px; color: var(--success);">Cargando diccionario...</div>
+            <button class="btn btn-small" onclick="showAdmin()" style="margin-top:10px">🔧 Administrar Diccionario</button>
+            <div id="vocab-counter" style="font-size: 0.7rem; margin-top: 15px; color: var(--success);"></div>
         </div>
 
         <!-- PANTALLA CÓMO JUGAR -->
@@ -138,6 +135,23 @@
             <button class="btn btn-primary" onclick="showScreen('scr-menu')">Entendido</button>
         </div>
 
+        <!-- PANTALLA ADMIN -->
+        <div id="scr-admin" class="screen">
+            <h2 style="color: var(--accent); margin-bottom: 10px;">BIBLIOTECA</h2>
+            <div style="display: flex; gap: 5px; width: 100%;">
+                <input type="text" id="add-word-input" placeholder="Nueva..." style="margin:0; font-size: 1rem;">
+                <button class="btn btn-primary" style="width: auto; margin:0;" onclick="addWordAdmin()">Añadir</button>
+            </div>
+            <input type="text" id="admin-search" placeholder="🔍 Buscar..." oninput="renderAdmin()" style="margin-top:10px; font-size: 0.9rem; padding: 8px;">
+            <div id="admin-list"></div>
+            <div style="display: flex; gap: 5px; width: 100%; margin-bottom: 10px;">
+                <button class="btn-small" style="flex:1; background: #0984e3;" onclick="exportJSON()">Exportar</button>
+                <button class="btn-small" style="flex:1; background: #6c5ce7;" onclick="document.getElementById('file-input').click()">Importar</button>
+                <input type="file" id="file-input" style="display:none" accept=".json" onchange="importJSON(this)">
+            </div>
+            <button class="btn btn-primary" onclick="showScreen('scr-menu')">Volver</button>
+        </div>
+
         <!-- PANTALLA JUEGO -->
         <div id="scr-game" class="screen">
             <div class="hud">
@@ -153,8 +167,8 @@
             <input type="text" id="game-input" placeholder="Escribe aquí..." autocomplete="off">
             <button id="mirror-btn" class="btn" onclick="execMirror()">🪞 ESPEJO</button>
             <div style="display: flex; gap: 5px; width: 100%;">
-                <button class="btn btn-small" onclick="initGame(state.mode)" style="flex:1">Reiniciar</button>
-                <button class="btn btn-small" onclick="location.reload()" style="flex:1">Menú</button>
+                <button class="btn btn-small" onclick="initGame(state.mode)">Reiniciar</button>
+                <button class="btn btn-small" onclick="location.reload()">Menú</button>
             </div>
         </div>
 
@@ -169,7 +183,7 @@
     </div>
 
     <script>
-        const INITIAL_VOCAB = ["mago", "goma", "lotería", "río", "perro", "casa", "ostra", "atleta", "caño", "niño"];
+        const INITIAL_VOCAB = ["mago", "goma", "lotería", "río", "caos", "poeta", "maíz", "baúl", "marcador", "zapato", "perro", "casa", "árbol", "auto", "agua", "barco", "bota", "burro", "cielo", "comida", "conejo", "corazón", "calle", "copa", "dado", "dedo", "diente", "dinero", "doctor", "dormir", "día", "elefante", "escuela", "espejo", "estrella", "escalera", "erizo", "flor", "fuego", "fresa", "frío", "foto", "foca", "gato", "galleta", "gorra", "guitarra", "globo", "helado", "hoja", "huevo", "hilo", "hada", "isla", "iglesia", "imán", "invierno", "idea", "jabón", "jarra", "juguete", "jirafa", "jugo", "luna", "libro", "lápiz", "limón", "llave", "lluvia", "mano", "mesa", "manzana", "mono", "nube", "nido", "naranja", "nariz", "nieve", "oso", "ojo", "ola", "oreja", "oro", "pato", "pelota", "piano", "puerta", "pájaro", "queso", "quinto", "ratón", "rosa", "reloj", "rueda", "sopa", "silla", "sapo", "sueño", "tigre", "taza", "teléfono", "tía", "uva", "universo", "vaca", "vaso", "ventana", "vela", "viaje", "zorro", "ostra", "astro", "atleta"];
 
         const state = {
             mode: 'classic', 
@@ -186,12 +200,15 @@
             isMirrorInEffect: false 
         };
 
-        const KEY_LEARNED = 'mago_goma_learned_v2';
+        const KEY = 'mago_goma_v_final';
         const JSON_URL = 'palabras.json';
 
         function normalize(text) {
-            const map = {'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 'ü':'u'};
-            return text.toLowerCase().replace(/[áéíóúü]/g, m => map[m]);
+            const map = {
+                'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u',
+                'ü':'u'
+            };
+            return text.toLowerCase().replace(/[áéíóúü]/g, matched => map[matched]);
         }
 
         function setLevel(lvl, btn) {
@@ -202,10 +219,13 @@
 
         function splitSyllables(word) {
             word = word.toLowerCase().trim();
-            const strong = "aeoáéó", accentedWeak = "íú", weak = "iuü";
+            const strong = "aeoáéó";
+            const accentedWeak = "íú";
+            const weak = "iuü";
             const vowels = strong + accentedWeak + weak;
             const inseparable = ["bl","br","cl","cr","dl","dr","fl","fr","gl","gr","pl","pr","tr","ch","ll","rr"];
-            let syllables = [], i = 0;
+            let syllables = [];
+            let i = 0;
             while (i < word.length) {
                 let nucS = i;
                 while (nucS < word.length && !vowels.includes(word[nucS])) nucS++;
@@ -245,26 +265,59 @@
                 const response = await fetch(JSON_URL);
                 if (response.ok) {
                     const remoteWords = await response.json();
-                    baseWords = remoteWords; // 67k+ palabras
+                    baseWords = [...new Set([...baseWords, ...remoteWords])];
                 }
-            } catch (error) { console.warn("Error cargando JSON."); }
-            
-            const saved = localStorage.getItem(KEY_LEARNED);
-            const learned = saved ? JSON.parse(saved) : [];
-            state.memory = [...new Set([...baseWords, ...learned])];
-            document.getElementById('vocab-counter').innerText = `Mago listo (${state.memory.length} palabras)`;
+            } catch (error) {}
+            const saved = localStorage.getItem(KEY);
+            state.memory = saved ? [...new Set([...baseWords, ...JSON.parse(saved)])] : baseWords;
+            document.getElementById('vocab-counter').innerText = `Vocabulario del Mago: ${state.memory.length} palabras`;
         }
 
-        function saveLearned(word) {
-            const saved = localStorage.getItem(KEY_LEARNED);
-            let learned = saved ? JSON.parse(saved) : [];
-            if (!learned.includes(word)) {
-                learned.push(word);
-                try { localStorage.setItem(KEY_LEARNED, JSON.stringify(learned)); } catch(e) {}
+        function saveMemory() { 
+            localStorage.setItem(KEY, JSON.stringify(state.memory)); 
+            document.getElementById('vocab-counter').innerText = `Vocabulario del Mago: ${state.memory.length} palabras`;
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showAdmin() { showScreen('scr-admin'); renderAdmin(); }
+
+        function renderAdmin() {
+            const list = document.getElementById('admin-list');
+            const search = normalize(document.getElementById('admin-search').value);
+            list.innerHTML = '';
+            const filtered = state.memory.filter(w => normalize(w).includes(search)).sort();
+            filtered.forEach(word => {
+                const item = document.createElement('div');
+                item.className = 'admin-item';
+                item.innerHTML = `<span><strong>${word.toUpperCase()}</strong> (${splitSyllables(word).join('-')})</span>
+                    <button class="btn-danger" style="background:#ff7675; border:none; color:white; padding:4px 8px; border-radius:5px; cursor:pointer;" onclick="deleteWordAdmin('${word}')">✕</button>`;
+                list.appendChild(item);
+            });
+        }
+
+        function addWordAdmin() {
+            const input = document.getElementById('add-word-input');
+            const word = input.value.toLowerCase().trim();
+            if (word.length >= 2 && !state.memory.includes(word)) {
+                state.memory.push(word);
+                saveMemory();
+                input.value = '';
+                renderAdmin();
             }
         }
 
+        function deleteWordAdmin(w) {
+            state.memory = state.memory.filter(x => x !== w);
+            saveMemory();
+            renderAdmin();
+        }
+
         function initGame(mode) {
+            loadMemory();
             state.mode = mode;
             state.lives = mode === 'classic' ? 3 : 1;
             state.score = 0;
@@ -273,11 +326,12 @@
             state.mirrorAvailable = true;
             state.wizardMirrorAvailable = true;
             state.isMirrorInEffect = false;
+            
+            updateMirrorUI();
             showScreen('scr-game');
             updateHUD();
-            updateMirrorUI();
             document.getElementById('ui-word').innerText = "¡ADELANTE!";
-            document.getElementById('ui-hint').innerText = "Escribe una palabra libre";
+            document.getElementById('ui-hint').innerText = "Escribe cualquier palabra...";
             document.getElementById('game-input').value = "";
             document.getElementById('game-input').focus();
             startTimer(20);
@@ -292,80 +346,68 @@
             const firstSyllNorm = normalize(sylls[0]);
 
             if (state.lastSyllable && firstSyllNorm !== state.lastSyllable) {
-                processError(`Sigue siendo "${state.lastSyllable.toUpperCase()}"`);
+                processError(`Debe ser "${state.lastSyllable.toUpperCase()}"`);
                 return;
             }
             if (state.usedWords.has(val)) { processError("¡Ya usada!"); return; }
 
-            if (!state.memory.includes(val)) { 
-                state.memory.push(val); 
-                saveLearned(val); 
-            }
-
+            if (!state.memory.includes(val)) { state.memory.push(val); saveMemory(); }
             state.usedWords.add(val);
             state.score += 10;
-            let last = normalize(sylls[sylls.length - 1]);
-            if (last.startsWith('rr')) last = last.substring(1); 
-            state.lastSyllable = last;
+            
+            let rawLast = sylls[sylls.length - 1];
+            if (rawLast.startsWith('rr')) rawLast = rawLast.substring(1); 
+            state.lastSyllable = normalize(rawLast);
 
             state.isMirrorInEffect = false; 
             updateMirrorUI();
+
             flash('correct');
             document.getElementById('ui-word').innerText = val;
             input.value = "";
+            document.getElementById('ui-hint').innerText = "Mago pensando...";
+            updateHUD();
             clearInterval(state.timer);
-            setTimeout(wizardTurn, 600);
+            setTimeout(wizardTurn, 800);
         }
 
         function wizardTurn() {
             const rates = { aprendiz: 0.6, sabio: 0.8, supremo: 0.99 };
-            const success = Math.random() < rates[state.level];
+            const successProbability = rates[state.level];
             
-            // OPTIMIZACIÓN: Búsqueda rápida en grandes volúmenes
-            let pick = null;
-            if (success) {
-                const target = state.lastSyllable;
-                const candidates = [];
-                for(let i=0; i<state.memory.length; i++) {
-                    const w = state.memory[i];
-                    if (!state.usedWords.has(w) && normalize(splitSyllables(w)[0]) === target) {
-                        candidates.push(w);
-                        if (candidates.length > 50) break; // Suficiente variedad
-                    }
-                }
-                if (candidates.length > 0) pick = candidates[Math.floor(Math.random() * candidates.length)];
-            }
+            const possible = state.memory.filter(w => normalize(splitSyllables(w)[0]) === state.lastSyllable && !state.usedWords.has(w));
             
-            if (pick) {
+            if (possible.length > 0 && Math.random() < successProbability) {
+                const pick = possible[Math.floor(Math.random() * possible.length)];
                 const s = splitSyllables(pick);
                 state.usedWords.add(pick);
-                let last = normalize(s[s.length - 1]);
-                if (last.startsWith('rr')) last = last.substring(1);
-                state.lastSyllable = last;
+                let rawLast = s[s.length - 1];
+                if (rawLast.startsWith('rr')) rawLast = rawLast.substring(1);
+                state.lastSyllable = normalize(rawLast);
                 state.isMirrorInEffect = false;
                 updateMirrorUI();
 
                 document.getElementById('mago-emoji').innerText = "🧙‍♂️";
                 document.getElementById('ui-word').innerText = pick;
                 document.getElementById('ui-hint').innerText = `Tu turno: "${state.lastSyllable.toUpperCase()}"`;
-                startTimer(Math.max(5, 20 - (state.score/100)));
+                startTimer(Math.max(6, 20 - (state.score/80)));
             } else {
-                if (state.wizardMirrorAvailable && state.lastSyllable && !state.isMirrorInEffect) {
+                if (state.wizardMirrorAvailable && state.lastSyllable !== '' && !state.isMirrorInEffect) {
                     state.wizardMirrorAvailable = false;
                     state.isMirrorInEffect = true;
                     updateMirrorUI();
                     document.getElementById('mago-emoji').innerText = "🪞";
                     document.getElementById('ui-word').innerText = "¡REFLEJO!";
-                    document.getElementById('ui-hint').innerText = `¡RESPONDE TÚ A: "${state.lastSyllable.toUpperCase()}"!`;
+                    document.getElementById('ui-hint').innerText = `¡REFLEJO! Responde tú a: "${state.lastSyllable.toUpperCase()}"`;
                     startTimer(10);
                 } else {
                     document.getElementById('mago-emoji').innerText = "😵";
                     document.getElementById('ui-word').innerText = "¡ME RINDO!";
-                    document.getElementById('ui-hint').innerText = "¡Ganas bonus! Lanza palabra libre:";
+                    document.getElementById('ui-hint').innerText = "¡Ganas bonus! Cadena libre:";
                     state.lastSyllable = "";
                     state.isMirrorInEffect = false;
                     updateMirrorUI();
-                    state.score += 20;
+                    state.score += 20; // Bonus por rendición
                     startTimer(20);
                 }
             }
@@ -380,19 +422,29 @@
             clearInterval(state.timer);
             document.getElementById('mago-emoji').innerText = "🪞";
             document.getElementById('ui-word').innerText = "¡ESPEJO!";
-            setTimeout(wizardTurn, 600);
+            document.getElementById('ui-hint').innerText = `Mago debe responder a: "${state.lastSyllable.toUpperCase()}"`;
+            setTimeout(wizardTurn, 800);
         }
 
         function updateMirrorUI() {
             const btn = document.getElementById('mirror-btn');
-            const canUse = state.mirrorAvailable && !state.isMirrorInEffect && state.lastSyllable;
-            btn.className = canUse ? "btn available" : "btn";
-            btn.disabled = !canUse;
-            btn.innerText = state.isMirrorInEffect ? "🚫 REFLEJO ACTIVO" : "🪞 ESPEJO";
+            const canUse = state.mirrorAvailable && !state.isMirrorInEffect && state.lastSyllable !== '';
+            
+            if (canUse) {
+                btn.classList.add('available');
+                btn.disabled = false;
+                btn.innerText = "🪞 ESPEJO DISPONIBLE";
+            } else {
+                btn.classList.remove('available');
+                btn.disabled = true;
+                btn.innerText = state.isMirrorInEffect ? "🚫 REFLEJO ACTIVO" : "🪞 ESPEJO USADO";
+            }
         }
 
         function processError(msg) {
-            state.lives--; flash('wrong'); updateHUD();
+            state.lives--; 
+            flash('wrong'); 
+            updateHUD();
             if (state.lives <= 0) {
                 clearInterval(state.timer);
                 document.getElementById('final-score').innerText = `${state.score} PTS`;
@@ -403,7 +455,7 @@
                 updateMirrorUI();
                 document.getElementById('mago-emoji').innerText = "🔮";
                 document.getElementById('ui-word').innerText = "¡REINTENTO!";
-                document.getElementById('ui-hint').innerText = "Cadena reiniciada. ¡Lanza palabra libre!";
+                document.getElementById('ui-hint').innerText = "Cadena reiniciada. ¡Lanza una palabra!";
                 document.getElementById('game-input').value = "";
                 startTimer(20);
             }
@@ -416,7 +468,7 @@
             state.timer = setInterval(() => {
                 state.timeLeft -= 0.1;
                 bar.style.width = (state.timeLeft / sec) * 100 + "%";
-                if (state.timeLeft <= 0) processError("¡TIEMPO!");
+                if (state.timeLeft <= 0) processError("¡TIEMPO AGOTADO!");
             }, 100);
         }
 
@@ -425,29 +477,17 @@
             document.getElementById('ui-score').innerText = `${state.score} PTS`;
         }
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
         function flash(c) { document.body.classList.add(c); setTimeout(() => document.body.classList.remove(c), 400); }
         
         function exportJSON() {
-            const saved = localStorage.getItem(KEY_LEARNED);
-            const blob = new Blob([saved || "[]"], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mago_aprendido.json'; a.click();
+            const blob = new Blob([JSON.stringify(state.memory, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mago_diccionario.json'; a.click();
         }
-
         function importJSON(input) {
             const reader = new FileReader();
             reader.onload = e => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(Array.isArray(data)) {
-                        localStorage.setItem(KEY_LEARNED, JSON.stringify(data));
-                        location.reload();
-                    }
-                } catch(err) { alert("Archivo inválido"); }
+                const data = JSON.parse(e.target.result);
+                if(Array.isArray(data)) { state.memory = data; saveMemory(); renderAdmin(); alert("Importado!"); }
             };
             reader.readAsText(input.files[0]);
         }
@@ -457,3 +497,5 @@
     </script>
 </body>
 </html>
+
+
